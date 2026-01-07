@@ -1,0 +1,94 @@
+import cv2
+import numpy as np
+import mediapipe as mp
+import os
+
+# Step 1: Test imports and MediaPipe initialization
+print("Step 1: Testing imports...")
+try:
+    segmenter = mp.solutions.selfie_segmentation.SelfieSegmentation(model_selection=1)
+    print("✓ MediaPipe SelfieSegmentation initialized successfully")
+except Exception as e:
+    print(f"✗ MediaPipe failed: {e}")
+    print("Fix: Use Python 3.11/3.12 venv + pip install mediapipe")
+    exit(1)
+
+# Step 2: Input/Output setup
+input_video = "input.mp4"
+output_video = "output_no_bg.mp4"
+
+print(f"Step 2: Checking input file '{input_video}'...")
+if not os.path.exists(input_video):
+    print(f"✗ {input_video} not found in current directory!")
+    print("Download a sample video or place 'input.mp4' here.")
+    exit(1)
+
+cap = cv2.VideoCapture(input_video)
+if not cap.isOpened():
+    print("✗ Could not open video")
+    exit(1)
+print("✓ Input video opened")
+
+# Get video properties
+width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
+
+print(f"Video info: {width}x{height} @ {fps:.2f} FPS")
+
+# Video writer (try multiple codecs for compatibility)
+fourcc_options = [cv2.VideoWriter_fourcc(*"mp4v"), cv2.VideoWriter_fourcc(*"XVID")]
+out = None
+for fourcc in fourcc_options:
+    out = cv2.VideoWriter(output_video, fourcc, fps, (width, height))
+    if out.isOpened():
+        print(f"✓ Video writer opened with codec {fourcc}")
+        break
+if out is None:
+    print("✗ Could not create video writer")
+    cap.release()
+    exit(1)
+
+# Background color (black)
+bg_color = (0, 0, 0)
+
+frame_count = 0
+print("Step 3: Processing frames...")
+
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        break
+    
+    frame_count += 1
+    if frame_count % 30 == 0:  # Progress every ~1 sec
+        print(f"Processed {frame_count} frames...")
+    
+    # Convert BGR to RGB for MediaPipe
+    rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    
+    # Get segmentation mask
+    result = segmenter.process(rgb)
+    mask = result.segmentation_mask
+    
+    # Convert single-channel mask to 3-channel
+    mask = np.stack((mask,) * 3, axis=-1)
+    
+    # Create solid background
+    background = np.zeros(frame.shape, dtype=np.uint8)
+    background[:] = bg_color
+    
+    # Composite: foreground where mask > 0.5 threshold
+    output = np.where(mask > 0.5, frame, background)
+    
+    # Write frame
+    out.write(output.astype(np.uint8))
+
+# Cleanup
+cap.release()
+out.release()
+segmenter.close()
+cv2.destroyAllWindows()
+
+print(f"DONE! Created '{output_video}' ({frame_count} frames processed)")
+print("Play output_no_bg.mp4 to verify background removal.")
