@@ -25,10 +25,7 @@ At a pixel level, the task reduces to:
 - Object detection provides bounding boxes, not pixel-accurate cutouts
 - Full matting models are computationally expensive and overkill for demos
 
-**Semantic segmentation** provides the right balance of:
-- Speed
-- Accuracy
-- Simplicity
+**Semantic segmentation** provides the right balance of speed, accuracy, and simplicity.
 
 ---
 
@@ -69,24 +66,24 @@ These are **intentional tradeoffs** for speed and clarity.
 
 ## Requirements
 
-- Python **3.10 or 3.11** (MediaPipe may not work reliably on 3.12)
+- Python 3.10 or 3.11
 - OpenCV
 - MediaPipe
 - NumPy
 
----
+Install dependencies:
+pip install -r requirements.txt
+
 
 ## Usage
-
-Install dependencies:
-```bash
-pip install -r requirements.txt
 Place an input video named input.mp4 in the project directory
 
-Run the script:
+Run:
+code.py
 
-bash
-python remove_bg.py
-The processed output will be saved as:
+Output will be saved as:
 output_no_bg.mp4
+
+
+
 
