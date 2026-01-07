@@ -79,7 +79,7 @@ pip install -r requirements.txt
 Place an input video named input.mp4 in the project directory
 
 Run:
-remove_bg.py
+code.py
 
 Output will be saved as:
 output_no_bg.mp4
